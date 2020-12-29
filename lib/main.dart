@@ -3,7 +3,6 @@ import 'package:bot_toast/bot_toast.dart';
 import 'package:flutter/services.dart';
 import 'package:jpush_flutter/jpush_flutter.dart';
 import 'package:nspush/center.dart';
-import 'package:nspush/customRoute.dart';
 import 'package:nspush/login.dart';
 import 'package:nspush/order.dart';
 import 'package:nspush/work.dart';
@@ -46,7 +45,8 @@ class MyApp extends StatelessWidget {
         child: MaterialApp(
       title: 'Flutter Demo',
       theme: ThemeData(
-        primarySwatch: Colors.blue,
+        textTheme: TextTheme(bodyText2: TextStyle(fontSize: 16)),
+        primarySwatch: Colors.green,
         visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
       navigatorObservers: [BotToastNavigatorObserver()],
