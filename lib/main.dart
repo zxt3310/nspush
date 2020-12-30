@@ -86,12 +86,14 @@ class _MyHomePageState extends State<MyHomePage> {
           onReceiveNotification: (Map<String, dynamic> message) async {
         print("flutter onReceiveNotification: $message");
         setState(() {
-          //debugLable = "flutter onReceiveNotification: $message";
+          currentIndex = currentIndex;
         });
       }, onOpenNotification: (Map<String, dynamic> message) async {
         print("flutter onOpenNotification: $message");
         setState(() {
-          // debugLable = "flutter onOpenNotification: $message";
+          setState(() {
+            currentIndex = currentIndex;
+          });
         });
       });
     } on PlatformException {}
@@ -109,9 +111,11 @@ class _MyHomePageState extends State<MyHomePage> {
         backgroundColor: Colors.green,
         title: Text("农批商城语音助手"),
       ),
-      body: IndexedStack(
-          index: currentIndex,
-          children: [OrderPage(), WorkPage(), UserCenter()]),
+      body: IndexedStack(index: currentIndex, children: [
+        OrderPage(),
+        WorkPage(),
+        UserCenter(deviceId: widget.deviceId, push: widget.jpush)
+      ]),
       bottomNavigationBar: BottomNavigationBar(
         selectedItemColor: Colors.green,
         items: [

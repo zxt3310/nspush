@@ -33,6 +33,7 @@ dependencies:
   jpush_flutter: 0.6.1
   shared_preferences:
   cupertino_icons: ^1.0.0
+  provider:
   
 dev_dependencies:
   flutter_test:

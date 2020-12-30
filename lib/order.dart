@@ -1,8 +1,9 @@
 import 'dart:convert';
-
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:nspush/goodinfo.dart';
 import 'package:nspush/user.dart';
+import 'package:provider/provider.dart';
 
 List names = [
   '全部',
@@ -31,7 +32,7 @@ class _OrderPageState extends State<OrderPage>
   TabController tabcontroller;
   PageController pageController;
   int curIndex = 0;
-
+  StateProvider state = StateProvider();
   @override
   void initState() {
     // dataSource = _requestData();
@@ -57,92 +58,100 @@ class _OrderPageState extends State<OrderPage>
   }
 
   _onChangeTab(e) {
-    if (e != curIndex)
-      setState(() {
-        curIndex = e;
-        //pageController = PageController(initialPage: e);
-      });
+    state.changeIdx(e);
     pageController.animateToPage(e,
         duration: Duration(milliseconds: 300), curve: Curves.linear);
   }
 
   _onChangePage(e) {
     tabcontroller.animateTo(e);
-    setState(() {
-      curIndex = e;
-      pageController = PageController(initialPage: e);
-    });
-    print(e);
+    state.changeIdx(e);
   }
 
   @override
   Widget build(BuildContext context) {
     print('订单');
-    return Container(
-      color: Colors.white,
-      child: Column(children: [
-        TabBar(
-          controller: tabcontroller,
-          isScrollable: true,
-          tabs: _getBtns(),
-          onTap: _onChangeTab,
-          indicatorColor: Colors.green,
-          indicatorWeight: 4,
-          indicatorSize: TabBarIndicatorSize.label,
-        ),
-        Expanded(
-            child: PageView.builder(
-                itemCount: names.length,
-                controller: pageController,
-                onPageChanged: _onChangePage,
-                itemBuilder: (BuildContext ctx, int index) {
-                  return FutureBuilder(
-                      future: _requestData(curIndex),
-                      builder: (context, snapshot) {
-                        if (snapshot.connectionState == ConnectionState.done) {
-                          Response data = snapshot.requireData;
-                          String str = data.data;
-                          Map map = jsonDecode(str);
-                          //print(map);
-                          if (map['status'] != "1") {
+    return ChangeNotifierProvider(
+      create: (context) => state,
+      child: Container(
+        color: Colors.white,
+        child: Column(children: [
+          TabBar(
+            controller: tabcontroller,
+            isScrollable: true,
+            tabs: _getBtns(),
+            onTap: _onChangeTab,
+            indicatorColor: Colors.green,
+            indicatorWeight: 4,
+            indicatorSize: TabBarIndicatorSize.label,
+          ),
+          Expanded(
+              child: PageView.builder(
+                  itemCount: names.length,
+                  controller: pageController,
+                  onPageChanged: _onChangePage,
+                  itemBuilder: (BuildContext ctx, int index) {
+                    return FutureBuilder(
+                        future: _requestData(index),
+                        builder: (context, snapshot) {
+                          if (snapshot.connectionState ==
+                              ConnectionState.done) {
+                            Response data = snapshot.requireData;
+                            String str = data.data;
+                            Map map = jsonDecode(str);
+                            //print(map);
+                            if (map['status'] != "1") {
+                              return Container(
+                                child: Center(
+                                  child: Text(
+                                    '订单加载失败',
+                                    style: TextStyle(fontSize: 16),
+                                  ),
+                                ),
+                              );
+                            }
+                            Map orderData = map['data'];
+                            String imgUrl = orderData['goodsimgurl'];
+                            List orders = orderData['list'];
+                            if (orderData['count'] == 0) {
+                              return Container(
+                                child: Center(
+                                  child: Text(
+                                    '暂无订单',
+                                    style: TextStyle(fontSize: 16),
+                                  ),
+                                ),
+                              );
+                            } else {
+                              return ItemWidget(orders, imgUrl);
+                            }
+                          } else {
                             return Container(
                               child: Center(
                                 child: Text(
-                                  '订单加载失败',
+                                  '加载中...',
                                   style: TextStyle(fontSize: 16),
                                 ),
                               ),
                             );
                           }
-                          Map orderData = map['data'];
-                          String imgUrl = orderData['goodsimgurl'];
-                          List orders = orderData['list'];
-                          return ItemWidget(orders, imgUrl);
-                        } else {
-                          return Container(
-                            child: Center(
-                              child: Text(
-                                '加载中...',
-                                style: TextStyle(fontSize: 16),
-                              ),
-                            ),
-                          );
-                        }
-                      });
-                }))
-      ]),
+                        });
+                  }))
+        ]),
+      ),
     );
   }
 
   List<Widget> _getBtns() {
     return List<Widget>.generate(names.length, (index) {
       return Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: Text(names[index],
-            style: TextStyle(
-                fontSize: 15,
-                color: index == curIndex ? Colors.green : Colors.grey)),
-      );
+          padding: const EdgeInsets.all(8.0),
+          child: Consumer<StateProvider>(builder: (ctx, cur, child) {
+            return Text(names[index],
+                style: TextStyle(
+                    fontSize: 15,
+                    color: index == cur.curIndex ? Colors.green : Colors.grey));
+          }));
     });
   }
 }
@@ -165,7 +174,10 @@ class _ItemWidgetState extends State<ItemWidget> {
             Map order = widget.datalist[index];
             print(order);
             return GestureDetector(
-              onTap: () {},
+              onTap: () {
+                String id = order['order_id'].toString();
+                _pushToDetail(id);
+              },
               child: Container(
                 padding:
                     const EdgeInsets.symmetric(vertical: 15, horizontal: 20),
@@ -225,6 +237,7 @@ class _ItemWidgetState extends State<ItemWidget> {
         return names[idx];
       }
     }
+    return "";
   }
 
   List<Widget> _getOrderGoods(List goods, String imgUrl) {
@@ -261,5 +274,18 @@ class _ItemWidgetState extends State<ItemWidget> {
         ),
       );
     });
+  }
+
+  _pushToDetail(String orderId) {
+    Navigator.of(context)
+        .push(MaterialPageRoute(builder: (ctx) => GoodInfoPage(orderId)));
+  }
+}
+
+class StateProvider with ChangeNotifier {
+  int curIndex = 0;
+  changeIdx(int newIdx) {
+    curIndex = newIdx;
+    notifyListeners();
   }
 }

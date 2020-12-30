@@ -25,6 +25,7 @@ class _LoginPageState extends State<LoginPage> {
         FocusScope.of(context).requestFocus(FocusNode());
       },
       child: Scaffold(
+          resizeToAvoidBottomPadding: false,
           appBar: AppBar(
             backgroundColor: Colors.green,
             title: Text('登录'),
